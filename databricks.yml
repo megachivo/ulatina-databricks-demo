@@ -1,0 +1,28 @@
+# Demo end-to-end de Databricks para estudiantes de Ulatina.
+# Caso: e-commerce "TicoMarket" (tienda en línea en Costa Rica).
+#
+# Despliegue:
+#   databricks bundle deploy -t dev --profile <PERFIL>
+#   databricks bundle run ecommerce_e2e -t dev --profile <PERFIL>
+
+bundle:
+  name: ulatina-ecommerce-demo
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: Catálogo de Unity Catalog donde vive el demo.
+    default: workspace
+  schema:
+    description: Esquema del demo (se crea con el bundle).
+    default: ulatina_ecommerce
+  warehouse_id:
+    description: SQL warehouse para el dashboard.
+    lookup:
+      warehouse: Serverless Starter Warehouse
+
+targets:
+  dev:
+    default: true

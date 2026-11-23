@@ -1,0 +1,15 @@
+resources:
+  pipelines:
+    ecommerce_medallion:
+      name: "Ulatina - E-commerce Medallion"
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.ecommerce.name}
+      serverless: true
+      continuous: false
+      channel: CURRENT
+      root_path: ../src/pipeline
+      libraries:
+        - glob:
+            include: ../src/pipeline/transformations/**
+      configuration:
+        raw_path: /Volumes/${var.catalog}/${var.schema}/raw

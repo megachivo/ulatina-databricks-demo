@@ -1,0 +1,14 @@
+resources:
+  schemas:
+    ecommerce:
+      catalog_name: ${var.catalog}
+      name: ${var.schema}
+      comment: "Demo Ulatina: e-commerce TicoMarket (bronze / silver / gold, IA y ML)."
+
+  volumes:
+    raw:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.ecommerce.name}
+      name: raw
+      volume_type: MANAGED
+      comment: "Zona de aterrizaje: archivos JSON que llegan de la tienda en línea."

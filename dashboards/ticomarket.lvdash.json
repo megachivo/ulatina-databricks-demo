@@ -1,0 +1,1361 @@
+{
+  "datasets": [
+    {
+      "name": "ds_ventas",
+      "displayName": "Ventas diarias",
+      "queryLines": [
+        "SELECT fecha, provincia, categoria, canal_adquisicion, ordenes, unidades, ingreso_crc, margen_crc\n",
+        "FROM gold_ventas_diarias"
+      ]
+    },
+    {
+      "name": "ds_riesgo",
+      "displayName": "Riesgo de abandono",
+      "queryLines": [
+        "SELECT cliente_id, provincia, canal_adquisicion, segmento_riesgo, gasto_total_crc, prob_abandono,\n",
+        "       CASE WHEN segmento_riesgo = 'Alto' THEN 1 ELSE 0 END AS riesgo_alto,\n",
+        "       CASE WHEN segmento_riesgo = 'Alto' THEN gasto_total_crc ELSE 0 END AS gasto_en_riesgo_crc\n",
+        "FROM gold_riesgo_abandono"
+      ]
+    },
+    {
+      "name": "ds_top_riesgo",
+      "displayName": "Top clientes en riesgo",
+      "queryLines": [
+        "SELECT r.cliente_id, c.nombre, r.provincia, r.canal_adquisicion, r.gasto_total_crc,\n",
+        "       ROUND(r.prob_abandono, 3) AS prob_abandono\n",
+        "FROM gold_riesgo_abandono r JOIN silver_clientes c USING (cliente_id)\n",
+        "WHERE r.segmento_riesgo = 'Alto'\n",
+        "ORDER BY r.gasto_total_crc DESC LIMIT 25"
+      ]
+    },
+    {
+      "name": "ds_resenas",
+      "displayName": "Reseñas analizadas con IA",
+      "queryLines": [
+        "SELECT fecha, categoria, producto, tema, sentimiento, calificacion, texto\n",
+        "FROM gold_resenas_ia"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "ventas",
+      "displayName": "Ventas",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1",
+      "layout": [
+        {
+          "widget": {
+            "name": "titulo_ventas",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# TicoMarket · Ventas\n",
+                "Ventas completadas del último año (capa **gold** del pipeline medallion). Las ventas vienen bajando desde enero: ¿es estacionalidad o estamos perdiendo clientes? La pestaña **Clientes y abandono** responde con Machine Learning."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "filtro_fecha",
+            "queries": [
+              {
+                "name": "filtro_fecha_ds_ventas",
+                "query": {
+                  "datasetName": "ds_ventas",
+                  "fields": [
+                    {
+                      "name": "fecha",
+                      "expression": "`fecha`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "fecha",
+                    "displayName": "Fecha",
+                    "queryName": "filtro_fecha_ds_ventas"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Fecha",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "filtro_provincia",
+            "queries": [
+              {
+                "name": "filtro_provincia_ds_ventas",
+                "query": {
+                  "datasetName": "ds_ventas",
+                  "fields": [
+                    {
+                      "name": "provincia",
+                      "expression": "`provincia`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "provincia",
+                    "displayName": "Provincia",
+                    "queryName": "filtro_provincia_ds_ventas"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Provincia",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "filtro_categoria",
+            "queries": [
+              {
+                "name": "filtro_categoria_ds_ventas",
+                "query": {
+                  "datasetName": "ds_ventas",
+                  "fields": [
+                    {
+                      "name": "categoria",
+                      "expression": "`categoria`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "categoria",
+                    "displayName": "Categoría",
+                    "queryName": "filtro_categoria_ds_ventas"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Categoría",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 2,
+            "width": 4,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_ingreso",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_ventas",
+                  "fields": [
+                    {
+                      "name": "sum(ingreso_crc)",
+                      "expression": "SUM(`ingreso_crc`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(ingreso_crc)",
+                  "displayName": "Ingreso",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "CRC",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "title": "Ingreso",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 4,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_ordenes",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_ventas",
+                  "fields": [
+                    {
+                      "name": "sum(ordenes)",
+                      "expression": "SUM(`ordenes`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(ordenes)",
+                  "displayName": "Órdenes",
+                  "format": {
+                    "type": "number",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "title": "Órdenes",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 4,
+            "width": 4,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_margen",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_ventas",
+                  "fields": [
+                    {
+                      "name": "sum(margen_crc)",
+                      "expression": "SUM(`margen_crc`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(margen_crc)",
+                  "displayName": "Margen bruto",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "CRC",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "title": "Margen bruto",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 4,
+            "width": 4,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "tendencia_mensual",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_ventas",
+                  "fields": [
+                    {
+                      "name": "monthly(fecha)",
+                      "expression": "DATE_TRUNC(\"MONTH\", `fecha`)"
+                    },
+                    {
+                      "name": "sum(ingreso_crc)",
+                      "expression": "SUM(`ingreso_crc`)"
+                    },
+                    {
+                      "name": "categoria",
+                      "expression": "`categoria`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "monthly(fecha)",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "displayName": "Mes"
+                },
+                "y": {
+                  "fieldName": "sum(ingreso_crc)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Ingreso",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "CRC",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                },
+                "color": {
+                  "fieldName": "categoria",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Categoria"
+                }
+              },
+              "frame": {
+                "title": "Ingreso por mes",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 7,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "ingreso_provincia",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_ventas",
+                  "fields": [
+                    {
+                      "name": "provincia",
+                      "expression": "`provincia`"
+                    },
+                    {
+                      "name": "sum(ingreso_crc)",
+                      "expression": "SUM(`ingreso_crc`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(ingreso_crc)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Ingreso",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "CRC",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "provincia",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "value"
+                    }
+                  },
+                  "displayName": "Provincia"
+                }
+              },
+              "frame": {
+                "title": "Ingreso por provincia",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 13,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "ingreso_canal",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_ventas",
+                  "fields": [
+                    {
+                      "name": "canal_adquisicion",
+                      "expression": "`canal_adquisicion`"
+                    },
+                    {
+                      "name": "sum(ingreso_crc)",
+                      "expression": "SUM(`ingreso_crc`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(ingreso_crc)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Ingreso",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "CRC",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "canal_adquisicion",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "value"
+                    }
+                  },
+                  "displayName": "Canal de adquisición"
+                }
+              },
+              "frame": {
+                "title": "Ingreso por canal de adquisición",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 13,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ]
+    },
+    {
+      "name": "clientes",
+      "displayName": "Clientes y abandono",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1",
+      "layout": [
+        {
+          "widget": {
+            "name": "titulo_clientes",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# Clientes y abandono (Machine Learning)\n",
+                "Probabilidad de abandono calculada por el modelo `modelo_abandono` registrado en Unity Catalog (MLflow + scikit-learn). Riesgo **Alto** = probabilidad > 70 %."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "filtro_canal",
+            "queries": [
+              {
+                "name": "filtro_canal_ds_riesgo",
+                "query": {
+                  "datasetName": "ds_riesgo",
+                  "fields": [
+                    {
+                      "name": "canal_adquisicion",
+                      "expression": "`canal_adquisicion`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "canal_adquisicion",
+                    "displayName": "Canal de adquisición",
+                    "queryName": "filtro_canal_ds_riesgo"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Canal de adquisición",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "filtro_prov_riesgo",
+            "queries": [
+              {
+                "name": "filtro_prov_riesgo_ds_riesgo",
+                "query": {
+                  "datasetName": "ds_riesgo",
+                  "fields": [
+                    {
+                      "name": "provincia",
+                      "expression": "`provincia`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "provincia",
+                    "displayName": "Provincia",
+                    "queryName": "filtro_prov_riesgo_ds_riesgo"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Provincia",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_riesgo_alto",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_riesgo",
+                  "fields": [
+                    {
+                      "name": "sum(riesgo_alto)",
+                      "expression": "SUM(`riesgo_alto`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(riesgo_alto)",
+                  "displayName": "Clientes en riesgo alto"
+                }
+              },
+              "frame": {
+                "title": "Clientes en riesgo alto",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 4,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_prob_media",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_riesgo",
+                  "fields": [
+                    {
+                      "name": "avg(prob_abandono)",
+                      "expression": "AVG(`prob_abandono`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(prob_abandono)",
+                  "displayName": "Probabilidad media de abandono",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "title": "Probabilidad media de abandono",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 4,
+            "width": 4,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "kpi_gasto_riesgo",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_riesgo",
+                  "fields": [
+                    {
+                      "name": "sum(gasto_en_riesgo_crc)",
+                      "expression": "SUM(`gasto_en_riesgo_crc`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(gasto_en_riesgo_crc)",
+                  "displayName": "Gasto histórico en riesgo",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "CRC",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "title": "Gasto histórico en riesgo",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 4,
+            "width": 4,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "clientes_segmento",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_riesgo",
+                  "fields": [
+                    {
+                      "name": "segmento_riesgo",
+                      "expression": "`segmento_riesgo`"
+                    },
+                    {
+                      "name": "count(cliente_id)",
+                      "expression": "COUNT(`cliente_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "segmento_riesgo",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Segmento de riesgo"
+                },
+                "y": {
+                  "fieldName": "count(cliente_id)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Clientes"
+                }
+              },
+              "frame": {
+                "title": "Clientes por segmento de riesgo",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 7,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "riesgo_canal",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_riesgo",
+                  "fields": [
+                    {
+                      "name": "canal_adquisicion",
+                      "expression": "`canal_adquisicion`"
+                    },
+                    {
+                      "name": "avg(prob_abandono)",
+                      "expression": "AVG(`prob_abandono`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "avg(prob_abandono)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Probabilidad de abandono",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 1
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "canal_adquisicion",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "value"
+                    }
+                  },
+                  "displayName": "Canal"
+                }
+              },
+              "frame": {
+                "title": "Probabilidad de abandono por canal",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 7,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "top_riesgo",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_top_riesgo",
+                  "fields": [
+                    {
+                      "name": "cliente_id",
+                      "expression": "`cliente_id`"
+                    },
+                    {
+                      "name": "nombre",
+                      "expression": "`nombre`"
+                    },
+                    {
+                      "name": "provincia",
+                      "expression": "`provincia`"
+                    },
+                    {
+                      "name": "canal_adquisicion",
+                      "expression": "`canal_adquisicion`"
+                    },
+                    {
+                      "name": "gasto_total_crc",
+                      "expression": "`gasto_total_crc`"
+                    },
+                    {
+                      "name": "prob_abandono",
+                      "expression": "`prob_abandono`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "cliente_id",
+                    "displayName": "Cliente"
+                  },
+                  {
+                    "fieldName": "nombre",
+                    "displayName": "Nombre"
+                  },
+                  {
+                    "fieldName": "provincia",
+                    "displayName": "Provincia"
+                  },
+                  {
+                    "fieldName": "canal_adquisicion",
+                    "displayName": "Canal"
+                  },
+                  {
+                    "fieldName": "gasto_total_crc",
+                    "displayName": "Gasto histórico (₡)"
+                  },
+                  {
+                    "fieldName": "prob_abandono",
+                    "displayName": "Prob. abandono"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Clientes valiosos en riesgo alto (para campaña de retención)",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 13,
+            "width": 12,
+            "height": 7
+          }
+        }
+      ]
+    },
+    {
+      "name": "resenas",
+      "displayName": "Voz del cliente (IA)",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1",
+      "layout": [
+        {
+          "widget": {
+            "name": "titulo_resenas",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# Voz del cliente (IA generativa)\n",
+                "Las 500 reseñas más recientes, clasificadas con `ai_analyze_sentiment` y `ai_classify` directamente en SQL."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "filtro_sentimiento",
+            "queries": [
+              {
+                "name": "filtro_sentimiento_ds_resenas",
+                "query": {
+                  "datasetName": "ds_resenas",
+                  "fields": [
+                    {
+                      "name": "sentimiento",
+                      "expression": "`sentimiento`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "sentimiento",
+                    "displayName": "Sentimiento",
+                    "queryName": "filtro_sentimiento_ds_resenas"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Sentimiento",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "filtro_tema",
+            "queries": [
+              {
+                "name": "filtro_tema_ds_resenas",
+                "query": {
+                  "datasetName": "ds_resenas",
+                  "fields": [
+                    {
+                      "name": "tema",
+                      "expression": "`tema`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "tema",
+                    "displayName": "Tema",
+                    "queryName": "filtro_tema_ds_resenas"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Tema",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "resenas_tema",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_resenas",
+                  "fields": [
+                    {
+                      "name": "tema",
+                      "expression": "`tema`"
+                    },
+                    {
+                      "name": "count(texto)",
+                      "expression": "COUNT(`texto`)"
+                    },
+                    {
+                      "name": "sentimiento",
+                      "expression": "`sentimiento`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "tema",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Tema"
+                },
+                "y": {
+                  "fieldName": "count(texto)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Reseñas"
+                },
+                "color": {
+                  "fieldName": "sentimiento",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Sentimiento"
+                }
+              },
+              "frame": {
+                "title": "Reseñas por tema",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "pie_sentimiento",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_resenas",
+                  "fields": [
+                    {
+                      "name": "sentimiento",
+                      "expression": "`sentimiento`"
+                    },
+                    {
+                      "name": "count(texto)",
+                      "expression": "COUNT(`texto`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "count(texto)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Reseñas"
+                },
+                "color": {
+                  "fieldName": "sentimiento",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "positive",
+                        "color": "#3BA272"
+                      },
+                      {
+                        "value": "negative",
+                        "color": "#E4572E"
+                      },
+                      {
+                        "value": "neutral",
+                        "color": "#A0A7B4"
+                      },
+                      {
+                        "value": "mixed",
+                        "color": "#F2B134"
+                      }
+                    ]
+                  },
+                  "displayName": "Sentimiento"
+                }
+              },
+              "frame": {
+                "title": "Sentimiento general",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 4,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "tabla_resenas",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_resenas",
+                  "fields": [
+                    {
+                      "name": "fecha",
+                      "expression": "`fecha`"
+                    },
+                    {
+                      "name": "producto",
+                      "expression": "`producto`"
+                    },
+                    {
+                      "name": "calificacion",
+                      "expression": "`calificacion`"
+                    },
+                    {
+                      "name": "tema",
+                      "expression": "`tema`"
+                    },
+                    {
+                      "name": "sentimiento",
+                      "expression": "`sentimiento`"
+                    },
+                    {
+                      "name": "texto",
+                      "expression": "`texto`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "fecha",
+                    "displayName": "Fecha"
+                  },
+                  {
+                    "fieldName": "producto",
+                    "displayName": "Producto"
+                  },
+                  {
+                    "fieldName": "calificacion",
+                    "displayName": "★"
+                  },
+                  {
+                    "fieldName": "tema",
+                    "displayName": "Tema"
+                  },
+                  {
+                    "fieldName": "sentimiento",
+                    "displayName": "Sentimiento"
+                  },
+                  {
+                    "fieldName": "texto",
+                    "displayName": "Reseña"
+                  }
+                ]
+              },
+              "frame": {
+                "title": "Reseñas",
+                "showTitle": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 10,
+            "width": 12,
+            "height": 7
+          }
+        }
+      ]
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "canvasBackgroundColor": {
+        "light": "#F7F8FA",
+        "dark": "#1F272D"
+      },
+      "widgetBackgroundColor": {
+        "light": "#FFFFFF",
+        "dark": "#11171C"
+      },
+      "widgetBorderColor": {
+        "light": "#FFFFFF",
+        "dark": "#11171C"
+      },
+      "fontColor": {
+        "light": "#11171C",
+        "dark": "#E8ECF0"
+      },
+      "selectionColor": {
+        "light": "#2272B4",
+        "dark": "#8ACAFF"
+      },
+      "visualizationColors": [
+        "#0072B2",
+        "#E69F00",
+        "#009E73",
+        "#CC79A7",
+        "#56B4E9",
+        "#D55E00",
+        "#F0E442"
+      ],
+      "widgetHeaderAlignment": "LEFT",
+      "widgetCornerRadius": 8
+    }
+  }
+}
