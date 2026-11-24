@@ -42,19 +42,25 @@ Tablas que se crean en `workspace.ulatina_ecommerce`:
 
 ## Agenda (90 min)
 
-| Min | Módulo | Qué mostrar | Dónde |
+La sesión abre con la **charla con slides (~27 min)**, que explica *qué* es Databricks y *por qué* existe.
+Después viene el **demo (~58 min)**, que muestra en vivo esas mismas piezas con TicoMarket, y cierran **5 min de preguntas**.
+La charla ya cubre la introducción, Free Edition y las certificaciones, así que el demo no las repite.
+
+| Min | Bloque | Qué mostrar | Dónde |
 |---|---|---|---|
-| 0–5 | **Intro** | Qué es un lakehouse; el problema de TicoMarket: *las ventas bajan desde enero, ¿por qué?* | Slides |
-| 5–15 | **1 · Workspace y datos crudos** | Git folder conectado a GitHub, notebook 01, el Volume `raw` con los JSON | Workspace → Git folder; Catalog → `raw` |
-| 15–30 | **2 · Pipeline medallion** | Grafo del pipeline, bronze/silver/gold, pestaña *Data quality* (filas descartadas), **ingesta incremental**: correr el job con `lote=2` y ver que solo entran los archivos nuevos | Jobs & Pipelines |
-| 30–40 | **3 · Unity Catalog** | Linaje de `gold_ventas_diarias` hasta el JSON, tags `pii`, email enmascarado, `SHOW GRANTS` | Catalog Explorer; notebook 05 |
-| 40–50 | **4 · SQL y Dashboard** | SQL Editor sobre gold; dashboard *Ulatina - TicoMarket* (ventas, abandono, reseñas) con filtros | SQL Editor; Dashboards |
-| 50–58 | **5 · Genie** | Preguntas en español (ver abajo); mostrar el SQL que generó | Genie |
-| 58–68 | **6 · IA generativa en SQL** | `ai_analyze_sentiment`, `ai_classify` y `ai_query` respondiendo a clientes molestos | notebook 03 |
-| 68–78 | **7 · Machine Learning** | Experimento MLflow (métricas, importancia de variables), modelo versionado en UC, tabla de riesgo | notebook 04; Experiments; Catalog → Models |
-| 78–83 | **8 · Orquestación y CI/CD** | El job con 5 tareas (DAG), historial de ejecuciones; el bundle como código en Git | Jobs; GitHub |
-| 83–88 | **9 · Databricks Apps** | Doom jugado por IA (`ai_decide`) | App `doom-ulatina` |
-| 88–90 | **Cierre** | Cómo crear su cuenta gratis en Free Edition y clonar este repo | — |
+| 0–27 | **Charla** | Lakehouse, Unity Catalog, Lakeflow, Genie, AI/BI, Apps; QR de Free Edition y sus límites; certificaciones. Cierra con *"vamos a la plataforma"* | Slides |
+| 27–32 | **1 · Workspace y datos crudos** | Git folder conectado a GitHub, notebook 01, el Volume `raw` con los JSON | Workspace → Git folder; Catalog → `raw` |
+| 32–43 | **2 · Pipeline medallion** | Grafo del pipeline, bronze/silver/gold, pestaña *Data quality* (filas descartadas), **ingesta incremental**: correr el job con `lote=2` y ver que solo entran los archivos nuevos | Jobs & Pipelines |
+| 43–49 | **3 · Unity Catalog** | Linaje de `gold_ventas_diarias` hasta el JSON, tags `pii`, email enmascarado, `SHOW GRANTS` | Catalog Explorer; notebook 05 |
+| 49–55 | **4 · SQL y Dashboard** | SQL Editor sobre gold; dashboard *Ulatina - TicoMarket* (ventas, abandono, reseñas) con filtros | SQL Editor; Dashboards |
+| 55–61 | **5 · Genie** | Preguntas en español (ver abajo); mostrar el SQL que generó | Genie |
+| 61–68 | **6 · IA generativa en SQL** | `ai_analyze_sentiment`, `ai_classify` y `ai_query` respondiendo a clientes molestos | notebook 03 |
+| 68–76 | **7 · Machine Learning** | Experimento MLflow (métricas, importancia de variables), modelo versionado en UC, tabla de riesgo | notebook 04; Experiments; Catalog → Models |
+| 76–80 | **8 · Orquestación y CI/CD** | El job con 5 tareas (DAG), historial de ejecuciones; el bundle como código en Git | Jobs; GitHub |
+| 80–85 | **9 · Databricks Apps** | Doom jugado por IA | App `doom-ulatina` |
+| 85–90 | **Preguntas** | Recordar el repo para replicarlo en Free Edition | — |
+
+**Si el tiempo se aprieta**, recortar en este orden: módulo 8 (mencionarlo de palabra), módulo 3 (solo el email enmascarado), módulo 1 (arrancar directo en el pipeline).
 
 ### Preguntas para Genie
 
